@@ -1,28 +1,25 @@
 dist: xenial
+language: bash
 services:
-  - docker
+- docker
 addons:
   snaps:
-    update: true
-    packages:
-      - snapd
-      - snapcraft
+  - name: snapcraft
+    confinement: classic
 before_install:
-  - openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv -in snap_token.enc -out snap_token -d
+- openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv -in snap_token.enc -out snap_token -d
 script:
-  # build
-  - docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
-  # install
-  - sudo snap install *.snap --devmode
-  # test
-  - latexml --VERSION || echo "Expected exit code 1"
-  - latexml --dest=test.xml test.tex
+# build
+- docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/"
+# install
+- sudo snap install *.snap --devmode
+# test
+- latexml --VERSION || echo "Expected exit code 1"
+- latexml --dest=test.xml test.tex
 deploy:
+- provider: script
   skip_cleanup: true
-  provider: script
-  script:
-    - cat snap_token | snapcraft login --with -
-    - snapcraft push --release=stable metanorma_*_amd64.snap
+  script: ./.travis/deploy.sh
   on:
     tags: true
     branch: master
