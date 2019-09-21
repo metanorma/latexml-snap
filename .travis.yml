@@ -22,7 +22,7 @@ deploy:
     skip_cleanup: true
     provider: script
     script:
-      - snapcraft push --release=stable latexml_*_amd64.snap
+      - snapcraft push --release=stable docker.snap
     script: ./.travis/deploy.sh
     on:
       tags: true
