@@ -1,12 +1,20 @@
 dist: xenial
-services:
-- docker
+services: [docker]
 addons:
-  snaps:
+  apt:
     update: true
     packages:
-    - snapd
-    - snapcraft
+      - snapd
+      - snapcraft
+# dist: xenial
+# services:
+#   - docker
+# addons:
+  # snaps:
+  #   update: true
+  #   packages:
+  #   - snapd
+  #   - snapcraft
 # script:
 # - docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
 # - sudo snap install *.snap --devmode
