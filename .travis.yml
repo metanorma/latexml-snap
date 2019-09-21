@@ -10,10 +10,6 @@ addons:
 script:
   # build
   - docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
-  - sudo snap install *.snap --devmode
-  - latexml --VERSION || echo "Expected exit code 1"
-  - latexml --dest=test.xml test.tex
-  - docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
   # install
   - sudo snap install *.snap --devmode
   # test
