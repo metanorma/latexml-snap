@@ -1,4 +1,4 @@
-image:https://img.shields.io/travis/metanorma/latexml-snap/master.svg["Build Status", link="https://travis-ci.org/metanorma/latexml-snap"]
+image:https://img.shields.io/travis/metanorma/latexml-snap/master.svg["Build Status", link="https://travis-ci.com/metanorma/latexml-snap"]
 
 = latexml-snap: LaTeXML SNAP
 
