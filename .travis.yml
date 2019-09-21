@@ -19,16 +19,15 @@ script:
   # test
   - latexml --VERSION || echo "Expected exit code 1"
   - latexml --dest=test.xml test.tex
+after_success:
+  - openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
 deploy:
   - provider: script
     skip_cleanup: true
     provider: script
     script:
-      - cat snap_token | snapcraft login --with -
-      - snapcraft push --release=stable metanorma_*_amd64.snap
+      - snapcraft push --release=stable latexml_*_amd64.snap
     script: ./.travis/deploy.sh
     on:
       tags: true
       branch: master
-after_success:
-- openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
