@@ -7,12 +7,8 @@ addons:
     packages:
     - snapd
     - snapcraft
-before_install:
-- openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv
-  -in snap_token.enc -out snap_token -d
 script:
-- docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable
-  sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
+- docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
 - sudo snap install *.snap --devmode
 - latexml --VERSION || echo "Expected exit code 1"
 - latexml --dest=test.xml test.tex
@@ -26,5 +22,4 @@ deploy:
     tags: true
     branch: master
 after_success:
-- openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv
-  -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
+- openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
