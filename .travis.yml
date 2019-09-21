@@ -9,9 +9,10 @@ addons:
       - snapcraft
 script:
   # build
-  - docker run -v $(pwd)/snap:/root/snap -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh -c "cd /root && apt update && snapcraft && cp latexml_*_amd64.snap ./output/docker.snap"
+  - docker run -v $(pwd)/snap:/root/snap -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/build.sh
+  - docker run -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/fix_checksum.sh
   # install
-  - sudo snap install *.snap --devmode
+  - sudo snap install latexml_fixed.snap --devmode
   # test
   - latexml --VERSION || echo "Expected exit code 1"
   - latexml --dest=test.xml test.tex
@@ -19,7 +20,7 @@ after_success:
   - openssl aes-256-cbc -K $encrypted_733e17776623_key -iv $encrypted_733e17776623_iv -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
 deploy:
   - provider: script
-    script: ./.travis/deploy.sh
+    script: docker run -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/deploy.sh
     skip_cleanup: true
     on:
       tags: true
