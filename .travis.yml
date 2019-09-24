@@ -2,11 +2,9 @@ dist: xenial
 services: [docker]
 language: bash
 addons:
-  apt:
-    update: true
-    packages:
-      - snapd
-      - snapcraft
+  snaps:
+    - name: snapcraft
+      classic: true
 script:
   # build
   - docker run -v $(pwd)/snap:/root/snap -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/build.sh
