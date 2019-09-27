@@ -14,6 +14,19 @@ parts:
     cpanm-packages: [LaTeXML@0.8.4]
     build-packages: [libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
     stage-packages: [libxml2, libxslt1.1, zlib1g]
+    override-stage: |
+      snapcraftctl stage
+      chmod 0755 ./usr/local/share/sgml
+      chmod 0755 ./usr/local/share/sgml/declaration
+      chmod 0755 ./usr/local/share/sgml/dtd
+      chmod 0755 ./usr/local/share/sgml/entities
+      chmod 0755 ./usr/local/share/sgml/misc
+      chmod 0755 ./usr/local/share/sgml/stylesheet
+      chmod 0755 ./usr/local/share/xml
+      chmod 0755 ./usr/local/share/xml/declaration
+      chmod 0755 ./usr/local/share/xml/entities
+      chmod 0755 ./usr/local/share/xml/misc
+      chmod 0755 ./usr/local/share/xml/schema
 apps:
   latexml:
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexml
