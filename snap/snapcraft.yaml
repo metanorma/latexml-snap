@@ -1,5 +1,5 @@
 name: latexml
-base: core
+base: core18
 version: '0.8.4'
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
@@ -29,12 +29,22 @@ parts:
       chmod 0755 ./usr/local/share/xml/schema
 apps:
   latexml:
+    environment:
+      LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexml
   c:
+    environment:
+      LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlc
   find:
+    environment:
+      LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlfind
   math:
+    environment:
+      LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlmath
   post:
+    environment:
+      LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlpost

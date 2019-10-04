@@ -35,7 +35,7 @@ class CpanmPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self.stage_packages.append('perl')
+        self.stage_packages.extend(['perl', 'perl-base'])
         self.build_packages.extend(['perl', 'build-essential'])
 
         self._install_cmd = ['cpanm']
