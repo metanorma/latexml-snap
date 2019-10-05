@@ -7,8 +7,8 @@ addons:
       classic: true
 script:
   # build
-  - docker run -v $(pwd)/snap:/root/snap -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/build.sh
-  # - docker run -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/fix_checksum.sh
+  - docker run -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -v $(pwd)/snap:/root/snap -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/build.sh
+  - docker run -v $(pwd)/.snapcraft:/root/.snapcraft -v $(pwd):/root/output -w $(pwd) snapcore/snapcraft:stable sh /root/.snapcraft/fix_checksum.sh
   # install
   - sudo snap install latexml_fixed.snap --devmode
   # test
