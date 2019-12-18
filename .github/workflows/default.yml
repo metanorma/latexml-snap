@@ -1,0 +1,50 @@
+name: ubuntu
+
+on: [push]
+
+jobs:
+  build:
+    name: Build LaTeXML snap
+    runs-on: ubuntu-latest
+    container:
+      image: snapcore/snapcraft:stable
+    steps:
+      - uses: actions/checkout@master
+      - name: Snapcraft setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y squashfs-tools python3
+          snapcraft --version
+      - name: Build snap
+        run: |
+          snapcraft snap --output latexml.snap
+      - name: Fix snap
+        run: |
+          unsquashfs latexml.snap
+          sudo chmod -R g-s ./squashfs-root
+          snapcraft pack squashfs-root --output latexml_fixed.snap
+      - uses: actions/upload-artifact@v1
+        with:
+          name: latexml-snap
+          path: latexml_fixed.snap
+  test:
+    name: Test LaTeXML snap
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Snapcraft setup
+        run: |
+          sudo apt update
+          sudo apt install -y snapd
+      - uses: actions/download-artifact@v1
+        with:
+          name: latexml-snap
+          path: ./snap
+      - name: Install snap
+        run: |
+          sudo snap install snap/latexml_fixed.snap --devmode
+      - name: Test snap
+        run: |
+          latexml --VERSION || echo "Expected exit code 1"
+          latexml --dest=test.xml test.tex
