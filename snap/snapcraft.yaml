@@ -1,18 +1,18 @@
 name: latexml
 base: core18
-version: '0.8.4'
+version: '9a0e7dc5'
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
   In the process of developing the Digital Library of Mathematical Functions, NIST had needed a means of transforming the LaTeX sources of our material into XML which would be used for further manipulations, rearrangements and construction of the web site. In particular, a true ‘Digital Library’ should focus on the semantics of the material, and so NIST should convert the mathematical material into both content and presentation MathML. At the time, there found no software suitable to our needs, so NIST began development of LaTeXML in-house.
 
-grade: stable
+grade: devel
 confinement: strict
 
 parts:
   latexml:
     plugin: cpanm
-    cpanm-packages: [LaTeXML@0.8.4]
-    build-packages: [libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
+    cpanm-packages: ['git://github.com/brucemiller/LaTeXML.git@9a0e7dc5']
+    build-packages: [git, libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
     stage-packages: [libxml2, libxslt1.1, zlib1g]
     override-stage: |
       snapcraftctl stage
