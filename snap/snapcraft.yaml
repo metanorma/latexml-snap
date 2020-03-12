@@ -32,19 +32,34 @@ apps:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexml
+    plugs:
+      - home
+      - network
   c:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlc
+    plugs:
+      - home
+      - network
   find:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlfind
+    plugs:
+      - home
+      - network
   math:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlmath
+    plugs:
+      - home
+      - network
   post:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlpost
+    plugs:
+      - home
+      - network
