@@ -11,7 +11,7 @@ confinement: strict
 parts:
   latexml:
     plugin: cpanm
-    cpanm-packages: [LaTeXML@0.8.4]
+    cpanm-packages: ['XML::LibXSLT@1.96', LaTeXML@0.8.4]
     build-packages: [libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
     stage-packages: [libxml2, libxslt1.1, zlib1g]
     override-stage: |
@@ -32,19 +32,34 @@ apps:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexml
+    plugs:
+      - home
+      - network
   c:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlc
+    plugs:
+      - home
+      - network
   find:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlfind
+    plugs:
+      - home
+      - network
   math:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlmath
+    plugs:
+      - home
+      - network
   post:
     environment:
       LC_ALL: "C.UTF-8"
     command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlpost
+    plugs:
+      - home
+      - network
