@@ -11,7 +11,7 @@ confinement: strict
 parts:
   latexml:
     plugin: cpanm
-    cpanm-packages: [LaTeXML@0.8.4]
+    cpanm-packages: ['XML::LibXSLT@1.96', LaTeXML@0.8.4]
     build-packages: [libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
     stage-packages: [libxml2, libxslt1.1, zlib1g]
     override-stage: |
