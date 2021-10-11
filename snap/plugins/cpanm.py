@@ -2,12 +2,11 @@ import snapcraft
 import logging
 
 import os
-import glob
 import shutil
-import subprocess
 import urllib.request
 
 logger = logging.getLogger(__name__)
+
 
 class CpanmPlugin(snapcraft.BasePlugin):
 
@@ -65,9 +64,14 @@ class CpanmPlugin(snapcraft.BasePlugin):
             if inc_path != ".":
                 perl_snap_inc.append('$SNAP' + inc_path)
 
-        with open(os.path.join(self.installdir, 'usr', 'bin', 'perl5lib.sh'), "w") as text_file:
-            text_file.write("env PERL5LIB={} env PATH=$SNAP/usr/local/bin:$PATH $@".format(':'.join(perl_snap_inc)))
+        perl5lib_sh = os.path.join(self.installdir,
+                                   'usr', 'bin', 'perl5lib.sh')
+        with open(perl5lib_sh, "w") as text_file:
+            text_file.write(
+                "env PERL5LIB={} env PATH=$SNAP/usr/local/bin:$PATH $@"
+                .format(':'.join(perl_snap_inc)))
 
         # cpanm install modules to `/usr/local` by default
         # unfortunatelly no best solution was found
-        shutil.copytree('/usr/local', os.path.join(self.installdir, 'usr', 'local'))
+        shutil.copytree('/usr/local',
+                        os.path.join(self.installdir, 'usr', 'local'))
