@@ -2,6 +2,9 @@ name: ubuntu
 
 on:
   push:
+    branches: [ main ]
+    tags: [ v* ]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -11,7 +14,7 @@ jobs:
     container:
       image: snapcore/snapcraft:stable
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
       - name: Snapcraft setup
         run: |
           sudo apt-get update
@@ -25,7 +28,7 @@ jobs:
           unsquashfs latexml.snap
           sudo chmod -R g-s ./squashfs-root
           snapcraft pack squashfs-root --output latexml_fixed.snap
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: latexml-snap
           path: latexml_fixed.snap
@@ -35,12 +38,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
       - name: Snapcraft setup
         run: |
           sudo apt update
           sudo apt install -y snapd
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v4
         with:
           name: latexml-snap
           path: ./snap
@@ -60,8 +63,8 @@ jobs:
     container:
       image: snapcore/snapcraft:stable
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/download-artifact@v1
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: latexml-snap
           path: ./snap
@@ -81,8 +84,8 @@ jobs:
     container:
       image: snapcore/snapcraft:stable
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/download-artifact@v1
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: latexml-snap
           path: ./snap
@@ -102,8 +105,8 @@ jobs:
     container:
       image: snapcore/snapcraft:stable
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/download-artifact@v1
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: latexml-snap
           path: ./snap
