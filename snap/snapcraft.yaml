@@ -1,5 +1,5 @@
 name: latexml
-base: core18
+base: core20
 version: '0.8.6'
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
@@ -11,7 +11,7 @@ confinement: strict
 parts:
   latexml:
     plugin: cpanm
-    cpanm-packages: ['XML::LibXSLT@1.96', LaTeXML@0.8.6]
+    cpanm-packages: ['XML::LibXSLT@1.96', LaTeXML@$SNAPCRAFT_PROJECT_VERSION]
     build-packages: [libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
     stage-packages: [libxml2, libxslt1.1, zlib1g]
     override-stage: |
