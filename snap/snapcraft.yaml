@@ -17,7 +17,7 @@ parts:
       apt install -y curl perl build-essential
       curl -o cpanminus.pl http://cpanmin.us
       perl -- cpanminus.pl App::cpanminus
-    override-build:
+    override-build: |
       env
 
       apt update
