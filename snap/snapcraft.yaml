@@ -1,13 +1,11 @@
 name: latexml
 base: core20
-version: '0.8.6'
+version: '0.8.7'
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
   In the process of developing the Digital Library of Mathematical Functions, NIST had needed a means of transforming the LaTeX sources of our material into XML which would be used for further manipulations, rearrangements and construction of the web site. In particular, a true ‘Digital Library’ should focus on the semantics of the material, and so NIST should convert the mathematical material into both content and presentation MathML. At the time, there found no software suitable to our needs, so NIST began development of LaTeXML in-house.
-
 grade: stable
 confinement: strict
-
 parts:
   latexml:
     plugin: nil
@@ -19,51 +17,19 @@ parts:
       apt install -y curl perl build-essential
       curl -o cpanminus.pl http://cpanmin.us
       perl -- cpanminus.pl App::cpanminus
-
-    override-build: |
-      env
-
-      apt update
-      apt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
-
-      # Install cpanm packages
-      cpanm_packages=("XML::LibXSLT@1.96" "LaTeXML@$SNAPCRAFT_PROJECT_VERSION")
-      for pkg in "${cpanm_packages[@]}"; do
-        cpanm --notest "$pkg"
-      done
-
-      # Modify perl5lib.sh
-      perl_incs=$(perl -e 'print "@INC"')
-      perl5lib_sh="/usr/bin/perl5lib.sh"      
-
-      cat <<EOF > $perl5lib_sh
-      #!/bin/bash
-      snap_prefix="\$1"
-      shift
-      perl_snap_inc=()
-      for inc_path in $perl_incs; do
-        if [ "\$inc_path" != "." ]; then
-          perl_snap_inc+=("\$snap_prefix\$inc_path")
-        fi
-      done
-      env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:$PATH \$@
-      EOF
-      chmod +x $perl5lib_sh
-
+    override-build: "env\n\napt update\napt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev\n\n# Install cpanm packages\ncpanm_packages=(\"XML::LibXSLT@1.96\" \"LaTeXML@$SNAPCRAFT_PROJECT_VERSION\")\nfor pkg in \"${cpanm_packages[@]}\"; do\n  cpanm --notest \"$pkg\"\ndone\n\n# Modify perl5lib.sh\nperl_incs=$(perl -e 'print \"@INC\"')\nperl5lib_sh=\"/usr/bin/perl5lib.sh\"      \n\ncat <<EOF > $perl5lib_sh\n#!/bin/bash\nsnap_prefix=\"\\$1\"\nshift\nperl_snap_inc=()\nfor inc_path in $perl_incs; do\n  if [ \"\\$inc_path\" != \".\" ]; then\n    perl_snap_inc+=(\"\\$snap_prefix\\$inc_path\")\n  fi\ndone\nenv PERL5LIB=\\$(IFS=:; echo \"\\${perl_snap_inc[*]}\") env PATH=\\$snap_prefix/usr/local/bin:$PATH \\$@\nEOF\nchmod +x $perl5lib_sh\n"
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
       /usr/share/perl: /usr/share/perl
       /usr/local: /usr/local
-
     stage-packages:
-    - perl
-    - perl-base
-    - libicu66
-    - libxml2
-    - libxslt1.1
-    - zlib1g
-
+      - perl
+      - perl-base
+      - libicu66
+      - libxml2
+      - libxslt1.1
+      - zlib1g
 apps:
   latexml:
     environment:
