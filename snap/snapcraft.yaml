@@ -17,7 +17,34 @@ parts:
       apt install -y curl perl build-essential
       curl -o cpanminus.pl http://cpanmin.us
       perl -- cpanminus.pl App::cpanminus
-    override-build: "env\n\napt update\napt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev\n\n# Install cpanm packages\ncpanm_packages=(\"XML::LibXSLT@1.96\" \"LaTeXML@$SNAPCRAFT_PROJECT_VERSION\")\nfor pkg in \"${cpanm_packages[@]}\"; do\n  cpanm --notest \"$pkg\"\ndone\n\n# Modify perl5lib.sh\nperl_incs=$(perl -e 'print \"@INC\"')\nperl5lib_sh=\"/usr/bin/perl5lib.sh\"      \n\ncat <<EOF > $perl5lib_sh\n#!/bin/bash\nsnap_prefix=\"\\$1\"\nshift\nperl_snap_inc=()\nfor inc_path in $perl_incs; do\n  if [ \"\\$inc_path\" != \".\" ]; then\n    perl_snap_inc+=(\"\\$snap_prefix\\$inc_path\")\n  fi\ndone\nenv PERL5LIB=\\$(IFS=:; echo \"\\${perl_snap_inc[*]}\") env PATH=\\$snap_prefix/usr/local/bin:$PATH \\$@\nEOF\nchmod +x $perl5lib_sh\n"
+    override-build:
+      env
+
+      apt update
+      qapt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
+
+      # Install cpanm packages
+      cpanm_packages=(\"XML::LibXSLT@1.96\" \"LaTeXML@$SNAPCRAFT_PROJECT_VERSION\")
+      for pkg in "${cpanm_packages[@]}"; do
+        cpanm --notest "$pkg"
+      done
+
+      # Modify perl5lib.sh
+      perl_incs=$(perl -e 'print \"@INC\"')
+      perl5lib_sh="/usr/bin/perl5lib.sh"
+      cat <<EOF > $perl5lib_sh
+      #!/bin/bash
+      snap_prefix="\$1"
+      shift
+      perl_snap_inc=()
+      for inc_path in $perl_incs; do
+        if [ "\$inc_path" != "." ]; then
+          perl_snap_inc+=("\$snap_prefix\$inc_path")
+        fi
+      done
+      env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:\$PATH \$@
+      EOF
+      chmod +x $perl5lib_sh
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
@@ -30,6 +57,11 @@ parts:
       - libxml2
       - libxslt1.1
       - zlib1g
+    override-stage: |
+      snapcraftctl stage
+      chmod 0755 ./usr/local/lib/python3.8
+      chmod 0755 ./usr/local/lib/python3.8/dist-packages
+
 apps:
   latexml:
     environment:
