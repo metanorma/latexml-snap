@@ -1,4 +1,4 @@
-image:https://github.com/metanorma/latexml-snap/workflows/ubuntu/badge.svg["Build Status", link="https://github.com/metanorma/latexml-snap/actions?query=workflow%3Aubuntu"]
+image:https://github.com/metanorma/latexml-snap/workflows/build-and-release/badge.svg["Build Status", link="https://github.com/metanorma/latexml-snap/actions?query=workflow%3Abuild-and-release"]
 
 = latexml-snap: LaTeXML Snap Package
 

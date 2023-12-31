@@ -1,5 +1,5 @@
 name: latexml
-base: core18
+base: core20
 version: '0.8.6'
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
@@ -10,56 +10,93 @@ confinement: strict
 
 parts:
   latexml:
-    plugin: cpanm
-    cpanm-packages: ['XML::LibXSLT@1.96', LaTeXML@0.8.6]
-    build-packages: [libxml2-dev, libxslt1-dev, libicu-dev, zlib1g-dev]
-    stage-packages: [libxml2, libxslt1.1, zlib1g]
-    override-stage: |
-      snapcraftctl stage
-      chmod 0755 ./usr/local/share/sgml
-      chmod 0755 ./usr/local/share/sgml/declaration
-      chmod 0755 ./usr/local/share/sgml/dtd
-      chmod 0755 ./usr/local/share/sgml/entities
-      chmod 0755 ./usr/local/share/sgml/misc
-      chmod 0755 ./usr/local/share/sgml/stylesheet
-      chmod 0755 ./usr/local/share/xml
-      chmod 0755 ./usr/local/share/xml/declaration
-      chmod 0755 ./usr/local/share/xml/entities
-      chmod 0755 ./usr/local/share/xml/misc
-      chmod 0755 ./usr/local/share/xml/schema
+    plugin: nil
+    source: .
+    override-pull: |
+      env
+
+      apt update
+      apt install -y curl perl build-essential
+      curl -o cpanminus.pl http://cpanmin.us
+      perl -- cpanminus.pl App::cpanminus
+
+    override-build: |
+      env
+
+      apt update
+      apt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
+
+      # Install cpanm packages
+      cpanm_packages=("XML::LibXSLT@1.96" "LaTeXML@$SNAPCRAFT_PROJECT_VERSION")
+      for pkg in "${cpanm_packages[@]}"; do
+        cpanm --notest "$pkg"
+      done
+
+      # Modify perl5lib.sh
+      perl_incs=$(perl -e 'print "@INC"')
+      perl5lib_sh="/usr/bin/perl5lib.sh"      
+
+      cat <<EOF > $perl5lib_sh
+      #!/bin/bash
+      snap_prefix="\$1"
+      shift
+      perl_snap_inc=()
+      for inc_path in $perl_incs; do
+        if [ "\$inc_path" != "." ]; then
+          perl_snap_inc+=("\$snap_prefix\$inc_path")
+        fi
+      done
+      env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:$PATH \$@
+      EOF
+      chmod +x $perl5lib_sh
+
+    organize:
+      /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
+      /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
+      /usr/share/perl: /usr/share/perl
+      /usr/local: /usr/local
+
+    stage-packages:
+    - perl
+    - perl-base
+    - libicu66
+    - libxml2
+    - libxslt1.1
+    - zlib1g
+
 apps:
   latexml:
     environment:
       LC_ALL: "C.UTF-8"
-    command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexml
+    command: usr/bin/perl5lib.sh $SNAP $SNAP/usr/local/bin/latexml
     plugs:
       - home
       - network
   c:
     environment:
       LC_ALL: "C.UTF-8"
-    command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlc
+    command: usr/bin/perl5lib.sh $SNAP $SNAP/usr/local/bin/latexmlc
     plugs:
       - home
       - network
   find:
     environment:
       LC_ALL: "C.UTF-8"
-    command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlfind
+    command: usr/bin/perl5lib.sh $SNAP $SNAP/usr/local/bin/latexmlfind
     plugs:
       - home
       - network
   math:
     environment:
       LC_ALL: "C.UTF-8"
-    command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlmath
+    command: usr/bin/perl5lib.sh $SNAP $SNAP/usr/local/bin/latexmlmath
     plugs:
       - home
       - network
   post:
     environment:
       LC_ALL: "C.UTF-8"
-    command: bash $SNAP/usr/bin/perl5lib.sh $SNAP/usr/local/bin/latexmlpost
+    command: usr/bin/perl5lib.sh $SNAP $SNAP/usr/local/bin/latexmlpost
     plugs:
       - home
       - network

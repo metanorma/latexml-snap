@@ -1,0 +1,38 @@
+name: release-tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      next_version:
+        description: |
+          Next release version.
+        required: true
+
+jobs:
+  push-tag:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.client_payload.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Add writable remote
+      run: |
+        git config --global user.name "metanorma-ci"
+        git config --global user.email "metanorma-ci@users.noreply.github.com"
+        git remote add github "https://metanorma-ci:${{ secrets.METANORMA_CI_PAT_TOKEN }}@github.com/$GITHUB_REPOSITORY.git"
+        git pull github ${GITHUB_REF} --ff-only
+
+    - run: |
+        echo SNAP_VERSION=${{ github.event.inputs.next_version }} >> ${GITHUB_ENV}
+
+    - run: |
+        sudo apt update && sudo apt install -y snapd
+        sudo snap install yq
+        yq e ".version = \"${SNAP_VERSION}\"" --inplace snap/snapcraft.yaml
+
+    - name: Push commit and tag
+      run: |
+        git add snap/snapcraft.yaml
+        git commit -m "Bump version to ${SNAP_VERSION}"
+        git tag v${SNAP_VERSION}
+        git push github HEAD:${GITHUB_REF} --tags
