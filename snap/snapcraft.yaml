@@ -30,7 +30,7 @@ parts:
       done
 
       # Modify perl5lib.sh
-      perl_incs=$(perl -e 'print \"@INC\"')
+      perl_incs=$(perl -e 'print "@INC"')
       perl5lib_sh="/usr/bin/perl5lib.sh"
       cat <<EOF > $perl5lib_sh
       #!/bin/bash
