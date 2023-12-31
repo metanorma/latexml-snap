@@ -21,7 +21,7 @@ parts:
       env
 
       apt update
-      qapt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
+      apt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
 
       # Install cpanm packages
       cpanm_packages=(\"XML::LibXSLT@1.96\" \"LaTeXML@$SNAPCRAFT_PROJECT_VERSION\")
