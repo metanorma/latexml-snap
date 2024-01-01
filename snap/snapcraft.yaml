@@ -45,6 +45,8 @@ parts:
       env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:\$PATH \$@
       EOF
       chmod +x $perl5lib_sh
+      chmod u=rx $SNAPCRAFT_PART_INSTALL/usr/local/lib/python3.8
+      chmod u=rx $SNAPCRAFT_PART_INSTALL/usr/local/lib/python3.8/dist-packages
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
@@ -57,11 +59,6 @@ parts:
       - libxml2
       - libxslt1.1
       - zlib1g
-    override-stage: |
-      snapcraftctl stage
-      chmod 0755 ./usr/local/lib/python3.8
-      chmod 0755 ./usr/local/lib/python3.8/dist-packages
-
 apps:
   latexml:
     environment:
