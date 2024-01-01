@@ -45,6 +45,8 @@ parts:
       env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:\$PATH \$@
       EOF
       chmod +x $perl5lib_sh
+
+      apt-get purge -y python3
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
