@@ -45,6 +45,9 @@ parts:
       env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:\$PATH \$@
       EOF
       chmod +x $perl5lib_sh
+      # workaround for "unusual mode 'rwxrwsr-x'"" issue
+      mkdir -p /usr/local/lib/python3.8/dist-packages
+      chmod -R g-s /usr/local/lib/python3.8
       snapcraftctl build
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
