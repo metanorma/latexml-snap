@@ -1,5 +1,5 @@
 name: latexml
-base: core18
+base: core20
 version: '0.8.7'
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
@@ -24,8 +24,8 @@ parts:
       apt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
 
       # Install cpanm packages
-      cpanm_packages="XML::LibXSLT@1.96 LaTeXML@$SNAPCRAFT_PROJECT_VERSION"
-      for pkg in $cpanm_packages; do
+      cpanm_packages=("XML::LibXSLT@1.96" "LaTeXML@$SNAPCRAFT_PROJECT_VERSION")
+      for pkg in "${cpanm_packages[@]}"; do
         cpanm --notest "$pkg"
       done
 
@@ -45,8 +45,8 @@ parts:
       env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:\$PATH \$@
       EOF
       chmod +x $perl5lib_sh
-
-      apt-get purge -y python3
+      chmod 0775 $SNAP/lib/python3.8
+      chmod 0775 $SNAP/lib/python3.8/dist-packages
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
@@ -55,6 +55,7 @@ parts:
     stage-packages:
       - perl
       - perl-base
+      - libicu66
       - libxml2
       - libxslt1.1
       - zlib1g
