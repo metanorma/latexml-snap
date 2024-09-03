@@ -41,7 +41,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y snapd
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: latexml-snap
           path: ./snap
@@ -62,7 +62,7 @@ jobs:
       image: snapcore/snapcraft:stable
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: latexml-snap
           path: ./snap
@@ -83,7 +83,7 @@ jobs:
       image: snapcore/snapcraft:stable
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: latexml-snap
           path: ./snap
@@ -104,7 +104,7 @@ jobs:
       image: snapcore/snapcraft:stable
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: latexml-snap
           path: ./snap
