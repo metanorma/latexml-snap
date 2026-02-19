@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       revision:
-        description: 'Revision number to promote to stable'
-        required: true
+        description: 'Revision number to promote to stable (leave empty to auto-detect from beta/candidate)'
+        required: false
         type: string
   workflow_call:
     inputs:
