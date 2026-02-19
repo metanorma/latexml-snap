@@ -41,17 +41,17 @@ jobs:
           echo "✅ Successfully promoted revision ${{ inputs.revision }} to stable channel"
           echo "The latexml snap package is now available in the stable channel."
 
-      - name: Promote latest candidate revision to stable channel
+      - name: Promote latest candidate/beta revision to stable channel
         if: ${{ !inputs.revision }}
         run: |
-          # Get the latest revision from candidate channel
-          REVISION=$(snapcraft list-revisions latexml | grep candidate | head -1 | awk '{print $1}')
+          # Get the latest revision from candidate or beta channel
+          REVISION=$(snapcraft list-revisions latexml | grep -E "candidate|beta" | head -1 | awk '{print $1}')
           if [ -n "$REVISION" ]; then
-            echo "Promoting latest candidate revision $REVISION to stable"
+            echo "Promoting latest revision $REVISION to stable"
             snapcraft release latexml $REVISION stable
             echo "✅ Successfully promoted revision $REVISION to stable channel"
             echo "The latexml snap package is now available in the stable channel."
           else
-            echo "No revisions found in candidate channel"
+            echo "No revisions found in candidate or beta channel"
             exit 1
           fi
