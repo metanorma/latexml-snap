@@ -1,0 +1,216 @@
+name: main
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ v* ]
+    paths-ignore:
+      - 'README.adoc'
+      - '.github/workflows/release-tag.yml'
+      - '.github/workflows/promote-to-stable.yml'
+      - '.github/workflows/re-tag.yml'
+  pull_request:
+    paths-ignore:
+      - 'README.adoc'
+      - '.github/workflows/release-tag.yml'
+      - '.github/workflows/promote-to-stable.yml'
+      - '.github/workflows/re-tag.yml'
+
+jobs:
+  get-architectures:
+    name: Get snap architectures
+    runs-on: ubuntu-latest
+    outputs:
+      architectures: ${{ steps.get-architectures.outputs.architectures }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get snap architectures
+        id: get-architectures
+        run: |
+          # Extract architectures from snapcraft.yaml (handle both old architectures and new platforms format)
+          if yq eval '.platforms' snap/snapcraft.yaml >/dev/null 2>&1 && [ "$(yq eval '.platforms' snap/snapcraft.yaml)" != "null" ]; then
+            # New format: platforms
+            architectures=$(yq eval '.platforms | keys' snap/snapcraft.yaml -o json | jq -c '.')
+          else
+            # Old format: architectures
+            architectures=$(yq eval '.architectures[].build-on' snap/snapcraft.yaml | jq -R -s -c 'split("\n")[:-1]')
+          fi
+          echo "architectures=$architectures" >> $GITHUB_OUTPUT
+          echo "Found architectures: $architectures"
+
+  build:
+    name: Build snap
+    needs: [get-architectures]
+    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    outputs:
+      snap-filename-amd64: ${{ matrix.architecture == 'amd64' && steps.get-snap-name.outputs.filename || '' }}
+      snap-filename-arm64: ${{ matrix.architecture == 'arm64' && steps.get-snap-name.outputs.filename || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: ${{ fromJSON(needs.get-architectures.outputs.architectures) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Debug environment
+        run: |
+          echo "Architecture: ${{ matrix.architecture }}"
+          echo "SNAPCRAFT_TARGET_ARCH: $SNAPCRAFT_TARGET_ARCH"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner arch: ${{ runner.arch }}"
+          ls -la snap/
+          cat snap/snapcraft.yaml
+      - name: Build snap for ${{ matrix.architecture }}
+        id: snapcraft
+        uses: snapcore/action-build@v1
+        env:
+          SNAPCRAFT_TARGET_ARCH: ${{ matrix.architecture }}
+      - name: Get snap filename
+        id: get-snap-name
+        run: |
+          snap_path="${{ steps.snapcraft.outputs.snap }}"
+          snap_filename=$(basename "$snap_path")
+          echo "filename=$snap_filename" >> $GITHUB_OUTPUT
+          echo "Snap filename: $snap_filename"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: latexml-snap-${{ matrix.architecture }}
+          path: ${{ steps.snapcraft.outputs.snap }}
+          retention-days: 5
+
+  test:
+    name: Test ${{ matrix.architecture }}
+    needs: [build, get-architectures]
+    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: ${{ fromJSON(needs.get-architectures.outputs.architectures) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: latexml-snap-${{ matrix.architecture }}
+          path: ./snap
+
+      - name: Install snap
+        run: |
+          sudo apt update && sudo apt install -y snapd
+          sudo snap install snap/*.snap --devmode
+
+      - name: Test snap
+        run: |
+          latexml --VERSION || echo "Expected exit code 1"
+          latexml --dest=test.xml test.tex
+
+  publish:
+    name: Publish snap
+    needs: [build, test, get-architectures]
+    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    if: github.event_name != 'pull_request'
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: ${{ fromJSON(needs.get-architectures.outputs.architectures) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: latexml-snap-${{ matrix.architecture }}
+          path: ./snap
+
+      - name: List snap files
+        run: |
+          echo "Contents of snap directory:"
+          ls -la snap/
+          echo "Snap files found:"
+          find snap/ -name "*.snap" -type f
+
+      - name: Get snap file path
+        id: get-snap-file
+        run: |
+          snap_file=$(find snap/ -name "*.snap" -type f | head -n 1)
+          if [ -z "$snap_file" ]; then
+            echo "Error: No snap file found in snap/ directory"
+            exit 1
+          fi
+          echo "snap_file=$snap_file" >> $GITHUB_OUTPUT
+          echo "Found snap file: $snap_file"
+
+      - name: Get snap version
+        id: get-snap-version
+        run: |
+          version=$(cat VERSION)
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Snap version: $version"
+
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@v3
+
+      - name: Check if version exists in edge/beta channels (main branch)
+        id: check-main-channels
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          # Use shared script to check if version exists in target channels
+          # Exit code 0 = should publish, Exit code 1 = should skip
+          if .github/scripts/check-snap-version.sh \
+            --channels "edge,beta" \
+            --version "${{ steps.get-snap-version.outputs.version }}" \
+            --architecture "${{ matrix.architecture }}"; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if version exists in beta/candidate channels (tags)
+        id: check-tag-channels
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Use shared script to check if version exists in target channels
+          # Exit code 0 = should publish, Exit code 1 = should skip
+          if .github/scripts/check-snap-version.sh \
+            --channels "beta,candidate" \
+            --version "${{ steps.get-snap-version.outputs.version }}" \
+            --architecture "${{ matrix.architecture }}"; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Publish to edge and beta for main branch
+      - name: Publish ${{ matrix.architecture }} to edge and beta
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.check-main-channels.outputs.should_publish == 'true'
+        uses: snapcore/action-publish@v1
+        with:
+          store_login: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+          snap: ${{ steps.get-snap-file.outputs.snap_file }}
+          release: edge,beta
+
+      - name: Skip publishing to edge and beta (already exists)
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.check-main-channels.outputs.should_publish == 'false'
+        run: |
+          echo "Skipping publish to edge/beta - version ${{ steps.get-snap-version.outputs.version }} already exists for ${{ matrix.architecture }}"
+
+      # Publish to beta and candidate for tags
+      - name: Publish ${{ matrix.architecture }} to beta and candidate
+        if: startsWith(github.ref, 'refs/tags/v') && steps.check-tag-channels.outputs.should_publish == 'true'
+        uses: snapcore/action-publish@v1
+        with:
+          store_login: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+          snap: ${{ steps.get-snap-file.outputs.snap_file }}
+          release: beta,candidate
+
+      - name: Skip publishing to beta and candidate (already exists)
+        if: startsWith(github.ref, 'refs/tags/v') && steps.check-tag-channels.outputs.should_publish == 'false'
+        run: |
+          echo "Skipping publish to beta/candidate - version ${{ steps.get-snap-version.outputs.version }} already exists for ${{ matrix.architecture }}"
+
+  promote-to-stable:
+    if: startsWith(github.ref, 'refs/tags/v') && !endsWith(github.ref, 'pre')
+    name: Promote to stable
+    needs: [publish]
+    uses: ./.github/workflows/promote-to-stable.yml
+    secrets:
+      METANORMA_SNAPCRAFT_TOKEN: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}

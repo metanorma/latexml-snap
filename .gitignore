@@ -1,4 +1,8 @@
 /snap/plugins/__pycache__
 /squashfs-root
+/parts
+/prime
+/stage
 *.snap
 .tmp.xml
+snap_token
