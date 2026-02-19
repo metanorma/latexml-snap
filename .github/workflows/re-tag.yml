@@ -9,6 +9,9 @@ on:
         required: true
         default: 'v2'
 
+permissions:
+  contents: write
+
 jobs:
   retag:
     name: Re-tag

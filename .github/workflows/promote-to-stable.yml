@@ -17,6 +17,9 @@ on:
       METANORMA_SNAPCRAFT_TOKEN:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   promote:
     name: Promote revision to stable

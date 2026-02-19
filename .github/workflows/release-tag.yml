@@ -8,6 +8,9 @@ on:
           Next release version.
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   push-tag:
     runs-on: ubuntu-latest
