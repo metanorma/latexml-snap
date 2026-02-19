@@ -1,0 +1,54 @@
+name: promote-to-stable
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Revision number to promote to stable'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      revision:
+        description: 'Revision number to promote to stable'
+        required: false
+        type: string
+    secrets:
+      METANORMA_SNAPCRAFT_TOKEN:
+        required: true
+
+jobs:
+  promote:
+    name: Promote revision to stable
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Login to snapcraft
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+        run: |
+          echo "$SNAPCRAFT_STORE_CREDENTIALS" | snapcraft login --with -
+
+      - name: Promote specific revision to stable channel
+        if: ${{ inputs.revision }}
+        run: |
+          snapcraft release latexml ${{ inputs.revision }} stable
+          echo "✅ Successfully promoted revision ${{ inputs.revision }} to stable channel"
+          echo "The latexml snap package is now available in the stable channel."
+
+      - name: Promote latest candidate revision to stable channel
+        if: ${{ !inputs.revision }}
+        run: |
+          # Get the latest revision from candidate channel
+          REVISION=$(snapcraft list-revisions latexml | grep candidate | head -1 | awk '{print $1}')
+          if [ -n "$REVISION" ]; then
+            echo "Promoting latest candidate revision $REVISION to stable"
+            snapcraft release latexml $REVISION stable
+            echo "✅ Successfully promoted revision $REVISION to stable channel"
+            echo "The latexml snap package is now available in the stable channel."
+          else
+            echo "No revisions found in candidate channel"
+            exit 1
+          fi

@@ -1,38 +1,46 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/canonical/snapcraft/refs/heads/main/schema/snapcraft.json
+---
 name: latexml
-base: core20
-version: '0.8.7'
+base: core24
 summary: A LaTeX to XML/HTML/MathML Converter
 description: |
-  In the process of developing the Digital Library of Mathematical Functions, NIST had needed a means of transforming the LaTeX sources of our material into XML which would be used for further manipulations, rearrangements and construction of the web site. In particular, a true ‘Digital Library’ should focus on the semantics of the material, and so NIST should convert the mathematical material into both content and presentation MathML. At the time, there found no software suitable to our needs, so NIST began development of LaTeXML in-house.
+  In the process of developing the Digital Library of Mathematical Functions, NIST had needed a means of transforming the LaTeX sources of our material into XML which would be used for further manipulations, rearrangements and construction of the web site. In particular, a true 'Digital Library' should focus on the semantics of the material, and so NIST should convert the mathematical material into both content and presentation MathML. At the time, there found no software suitable to our needs, so NIST began development of LaTeXML in-house.
 grade: stable
+adopt-info: latexml
 confinement: strict
+platforms:
+  amd64:
+    build-on: [amd64]
+    build-for: [amd64]
+
 parts:
   latexml:
     plugin: nil
     source: .
     override-pull: |
-      env
-
+      craftctl default
+      VERSION=$(cat $CRAFT_PROJECT_DIR/VERSION)
+      echo "Setting snap version to '$VERSION'"
+      craftctl set version="$VERSION"
+    override-build: |
       apt update
-      apt install -y curl perl build-essential
+      apt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev curl build-essential
+
+      VERSION=$(cat $CRAFT_PROJECT_DIR/VERSION)
+
+      # Install cpanm
       curl -o cpanminus.pl http://cpanmin.us
       perl -- cpanminus.pl App::cpanminus
-    override-build: |
-      env
 
-      apt update
-      apt install -y libxml2-dev libxslt1-dev libicu-dev zlib1g-dev
+      # Install cpanm packages with specific version
+      cpanm --notest "XML::LibXSLT@1.96"
+      cpanm --notest "LaTeXML@$VERSION"
 
-      # Install cpanm packages
-      cpanm_packages=("XML::LibXSLT@1.96" "LaTeXML@$SNAPCRAFT_PROJECT_VERSION")
-      for pkg in "${cpanm_packages[@]}"; do
-        cpanm --notest "$pkg"
-      done
-
-      # Modify perl5lib.sh
+      # Create perl5lib wrapper script
       perl_incs=$(perl -e 'print "@INC"')
-      perl5lib_sh="/usr/bin/perl5lib.sh"
-      cat <<EOF > $perl5lib_sh
+      perl5lib_sh="$CRAFT_PART_INSTALL/usr/bin/perl5lib.sh"
+      mkdir -p "$CRAFT_PART_INSTALL/usr/bin"
+      cat <<EOF > "$perl5lib_sh"
       #!/bin/bash
       snap_prefix="\$1"
       shift
@@ -44,11 +52,13 @@ parts:
       done
       env PERL5LIB=\$(IFS=:; echo "\${perl_snap_inc[*]}") env PATH=\$snap_prefix/usr/local/bin:\$PATH \$@
       EOF
-      chmod +x $perl5lib_sh
-      # workaround for "unusual mode 'rwxrwsr-x'"" issue
-      mkdir -p /usr/local/lib/python3.8/dist-packages
-      chmod -R g-s /usr/local/lib/python3.8
-      snapcraftctl build
+      chmod +x "$perl5lib_sh"
+
+      # Workaround for unusual mode issue
+      mkdir -p /usr/local/lib/python3.12/dist-packages 2>/dev/null || true
+      chmod -R g-s /usr/local/lib 2>/dev/null || true
+
+      craftctl default
     organize:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
@@ -57,10 +67,11 @@ parts:
     stage-packages:
       - perl
       - perl-base
-      - libicu66
+      - libicu74
       - libxml2
       - libxslt1.1
       - zlib1g
+
 apps:
   latexml:
     environment:
