@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       architectures: ${{ steps.get-architectures.outputs.architectures }}
+      testable-architectures: ${{ steps.get-architectures.outputs.testable_architectures }}
     steps:
       - uses: actions/checkout@v4
       - name: Get snap architectures
@@ -41,19 +42,28 @@ jobs:
           echo "architectures=$architectures" >> $GITHUB_OUTPUT
           echo "Found architectures: $architectures"
 
+          # Testable architectures (have native GitHub runners)
+          testable_architectures=$(echo "$architectures" | jq -c '["amd64", "arm64"] | map(select(. as $arch | $architectures | index($arch)))' --argjson architectures "$architectures")
+          echo "testable_architectures=$testable_architectures" >> $GITHUB_OUTPUT
+          echo "Testable architectures: $testable_architectures"
+
   build:
-    name: Build snap
+    name: Build snap (${{ matrix.architecture }})
     needs: [get-architectures]
-    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     outputs:
-      snap-filename-amd64: ${{ matrix.architecture == 'amd64' && steps.get-snap-name.outputs.filename || '' }}
-      snap-filename-arm64: ${{ matrix.architecture == 'arm64' && steps.get-snap-name.outputs.filename || '' }}
+      snap-filename: ${{ steps.get-snap-name.outputs.filename }}
     strategy:
       fail-fast: false
       matrix:
         architecture: ${{ fromJSON(needs.get-architectures.outputs.architectures) }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup QEMU for cross-compilation
+        if: matrix.architecture != 'amd64' && matrix.architecture != 'arm64'
+        uses: docker/setup-qemu-action@v3
+
       - name: Debug environment
         run: |
           echo "Architecture: ${{ matrix.architecture }}"
@@ -62,11 +72,13 @@ jobs:
           echo "Runner arch: ${{ runner.arch }}"
           ls -la snap/
           cat snap/snapcraft.yaml
+
       - name: Build snap for ${{ matrix.architecture }}
         id: snapcraft
         uses: snapcore/action-build@v1
         env:
           SNAPCRAFT_TARGET_ARCH: ${{ matrix.architecture }}
+
       - name: Get snap filename
         id: get-snap-name
         run: |
@@ -74,6 +86,7 @@ jobs:
           snap_filename=$(basename "$snap_path")
           echo "filename=$snap_filename" >> $GITHUB_OUTPUT
           echo "Snap filename: $snap_filename"
+
       - uses: actions/upload-artifact@v4
         with:
           name: latexml-snap-${{ matrix.architecture }}
@@ -84,10 +97,12 @@ jobs:
     name: Test ${{ matrix.architecture }}
     needs: [build, get-architectures]
     runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    # Only test on architectures with native runners
+    if: contains(fromJSON('["amd64", "arm64"]'), matrix.architecture)
     strategy:
       fail-fast: false
       matrix:
-        architecture: ${{ fromJSON(needs.get-architectures.outputs.architectures) }}
+        architecture: ${{ fromJSON(needs.get-architectures.outputs.testable-architectures) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -107,10 +122,11 @@ jobs:
           latexml --dest=test.xml test.tex
 
   publish:
-    name: Publish snap
+    name: Publish snap (${{ matrix.architecture }})
     needs: [build, test, get-architectures]
-    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    # Continue even if tests were skipped (for non-native architectures)
+    if: always() && needs.build.result == 'success' && github.event_name != 'pull_request'
     env:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
     strategy:

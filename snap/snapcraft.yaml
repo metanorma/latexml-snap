@@ -15,6 +15,18 @@ platforms:
   arm64:
     build-on: [arm64]
     build-for: [arm64]
+  armhf:
+    build-on: [armhf]
+    build-for: [armhf]
+  i386:
+    build-on: [i386]
+    build-for: [i386]
+  ppc64el:
+    build-on: [ppc64el]
+    build-for: [ppc64el]
+  s390x:
+    build-on: [s390x]
+    build-for: [s390x]
 
 parts:
   latexml:
@@ -66,6 +78,10 @@ parts:
       /usr/bin/perl5lib.sh: /usr/bin/perl5lib.sh
       /usr/lib/x86_64-linux-gnu/perl: /usr/lib/x86_64-linux-gnu/perl
       /usr/lib/aarch64-linux-gnu/perl: /usr/lib/aarch64-linux-gnu/perl
+      /usr/lib/arm-linux-gnueabihf/perl: /usr/lib/arm-linux-gnueabihf/perl
+      /usr/lib/i386-linux-gnu/perl: /usr/lib/i386-linux-gnu/perl
+      /usr/lib/powerpc64le-linux-gnu/perl: /usr/lib/powerpc64le-linux-gnu/perl
+      /usr/lib/s390x-linux-gnu/perl: /usr/lib/s390x-linux-gnu/perl
       /usr/share/perl: /usr/share/perl
       /usr/local: /usr/local
     stage-packages:
