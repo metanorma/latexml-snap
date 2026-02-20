@@ -244,4 +244,4 @@ jobs:
     needs: [publish]
     uses: ./.github/workflows/promote-to-stable.yml
     secrets:
-      METANORMA_SNAPCRAFT_TOKEN: ${{ secrets.METANORMA_SNAPCRAFT_LATEXML_TOKEN }}
+      METANORMA_SNAPCRAFT_LATEXML_TOKEN: ${{ secrets.METANORMA_SNAPCRAFT_LATEXML_TOKEN }}
