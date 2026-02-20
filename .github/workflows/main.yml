@@ -42,8 +42,8 @@ jobs:
           echo "architectures=$architectures" >> $GITHUB_OUTPUT
           echo "Found architectures: $architectures"
 
-          # Testable architectures (have native GitHub runners)
-          testable_architectures=$(echo "$architectures" | jq -c '["amd64", "arm64"] | map(select(. as $arch | $architectures | index($arch)))' --argjson architectures "$architectures")
+          # Testable architectures (have native GitHub runners: amd64, arm64)
+          testable_architectures=$(echo "$architectures" | jq -c '[.[] | select(. == "amd64" or . == "arm64")]')
           echo "testable_architectures=$testable_architectures" >> $GITHUB_OUTPUT
           echo "Testable architectures: $testable_architectures"
 
@@ -97,12 +97,12 @@ jobs:
     name: Test ${{ matrix.architecture }}
     needs: [build, get-architectures]
     runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    # Only test on architectures with native runners
-    if: contains(fromJSON('["amd64", "arm64"]'), matrix.architecture)
     strategy:
       fail-fast: false
       matrix:
         architecture: ${{ fromJSON(needs.get-architectures.outputs.testable-architectures) }}
+        exclude:
+          - architecture: ""
     steps:
       - uses: actions/checkout@v4
 
@@ -215,7 +215,7 @@ jobs:
         if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.check-main-channels.outputs.should_publish == 'true'
         uses: snapcore/action-publish@v1
         with:
-          store_login: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+          store_login: ${{ secrets.METANORMA_SNAPCRAFT_LATEXML_TOKEN }}
           snap: ${{ steps.get-snap-file.outputs.snap_file }}
           release: edge,beta
 
@@ -229,7 +229,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') && steps.check-tag-channels.outputs.should_publish == 'true'
         uses: snapcore/action-publish@v1
         with:
-          store_login: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+          store_login: ${{ secrets.METANORMA_SNAPCRAFT_LATEXML_TOKEN }}
           snap: ${{ steps.get-snap-file.outputs.snap_file }}
           release: beta,candidate
 
@@ -244,4 +244,4 @@ jobs:
     needs: [publish]
     uses: ./.github/workflows/promote-to-stable.yml
     secrets:
-      METANORMA_SNAPCRAFT_TOKEN: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+      METANORMA_SNAPCRAFT_TOKEN: ${{ secrets.METANORMA_SNAPCRAFT_LATEXML_TOKEN }}
