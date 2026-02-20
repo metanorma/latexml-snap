@@ -128,7 +128,7 @@ jobs:
     # Continue even if tests were skipped (for non-native architectures)
     if: always() && needs.build.result == 'success' && github.event_name != 'pull_request'
     env:
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.METANORMA_SNAPCRAFT_TOKEN }}
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.METANORMA_SNAPCRAFT_LATEXML_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
